@@ -1,0 +1,13 @@
+project_id            = "your-gcp-project-id"
+region                = "asia-northeast1"
+ayato_image_repo      = "docker.io/hayao0819/kamisato"
+ayato_image_tag       = "master"
+ayato_repo_name       = "alterlinux"
+ayato_domains         = ["repo.example.com"]
+auth_public_origin    = "https://web.example.com"
+r2_bucket_name        = "pacman-repo"
+cloudflare_account_id = "your-cloudflare-account-id"
+r2_access_key_id      = "your-r2-access-key-id"
+r2_secret_access_key  = "your-r2-secret-access-key"
+cfkv_namespace_id     = "your-workers-kv-namespace-id"
+cfkv_token            = "your-workers-kv-api-token"

@@ -1,0 +1,5 @@
+cloudflare_account_id = "your-cloudflare-account-id"
+cloudflare_zone_id    = "your-hayao0819.com-zone-id"
+cloudflare_api_token  = "your-pages-and-dns-api-token"
+pages_project_name    = "alterlinux"
+lumine_domain         = "alter.hayao0819.com"
