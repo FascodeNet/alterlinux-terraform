@@ -27,10 +27,17 @@ variable "ayato_digest_repo" {
   default     = "ghcr.io/hayao0819/kamisato"
 }
 
-variable "ayato_repo_name" {
-  description = "pacman repository name ayato serves and CI publishes to."
-  type        = string
-  default     = "alterlinux"
+variable "ayato_repos" {
+  description = "pacman repositories ayato serves and CI publishes to, with the architectures each declares (uploads outside a repo's arches are rejected)."
+  type = list(object({
+    name   = string
+    arches = list(string)
+  }))
+  default = [
+    { name = "alterlinux", arches = ["x86_64"] },
+    { name = "alterlinux-aur", arches = ["x86_64"] },
+    { name = "alterlinux-nostalgia", arches = ["pentium4", "i686", "i486"] },
+  ]
 }
 
 variable "ayato_domains" {

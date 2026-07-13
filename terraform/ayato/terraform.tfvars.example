@@ -2,7 +2,9 @@ project_id            = "your-gcp-project-id"
 region                = "asia-northeast1"
 ayato_image_repo      = "docker.io/hayao0819/kamisato"
 ayato_image_tag       = "master"
-ayato_repo_name       = "alterlinux"
+ayato_repos = [
+  { name = "alterlinux", arches = ["x86_64"] },
+]
 ayato_domains         = ["repo.example.com"]
 auth_public_origin    = "https://web.example.com"
 r2_bucket_name        = "pacman-repo"

@@ -7,7 +7,7 @@ locals {
   ci_api_keys_json = jsonencode([{
     name          = "alterlinux-repo"
     key           = random_password.ci_api_key.result
-    publish_repos = [var.ayato_repo_name]
+    publish_repos = [for r in var.ayato_repos : r.name]
   }])
 
   secrets = {

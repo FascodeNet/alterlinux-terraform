@@ -66,7 +66,7 @@ resource "google_cloud_run_v2_service" "ayato" {
       }
       env {
         name  = "AYATO_REPOS"
-        value = jsonencode([{ name = var.ayato_repo_name, arches = ["x86_64"] }])
+        value = jsonencode(var.ayato_repos)
       }
 
       dynamic "env" {
