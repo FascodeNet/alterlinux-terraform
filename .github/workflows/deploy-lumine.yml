@@ -1,0 +1,47 @@
+name: Deploy lumine
+
+# Builds the Kamisato lumine frontend and uploads it to Cloudflare Pages.
+# Terraform provisions the Pages project but cannot upload its contents.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 18 * * *" # track master; an unchanged build uploads nothing
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-lumine
+  cancel-in-progress: true
+
+env:
+  PAGES_PROJECT: alterlinux
+  AYATO_URL: https://alter.repo.hayao0819.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Secrets can't be read in `if:`; skip (not fail) when the token is unset.
+      - id: cfg
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "ready=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >>"$GITHUB_OUTPUT"
+            echo "::warning::CLOUDFLARE_API_TOKEN not set; skipping deploy"
+          fi
+      - if: steps.cfg.outputs.ready == 'true'
+        uses: Hayao0819/Kamisato/actions/build-lumine@master
+        id: lumine
+        with:
+          ayato_url: ${{ env.AYATO_URL }}
+          auth_mode: bearer
+      - if: steps.cfg.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CF_ACCOUNT_ID }}
+          command: pages deploy ${{ steps.lumine.outputs.dir }} --project-name=${{ env.PAGES_PROJECT }} --branch=main
