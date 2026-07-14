@@ -16,6 +16,11 @@ resource "google_cloud_run_v2_service" "ayato" {
   template {
     service_account = google_service_account.ayato.email
 
+    # Warm instance: a cold start can exceed pacman's 10s first-byte timeout.
+    scaling {
+      min_instance_count = 1
+    }
+
     containers {
       image   = "${var.ayato_image_repo}@${data.docker_registry_image.ayato.sha256_digest}"
       command = ["ayato"]
