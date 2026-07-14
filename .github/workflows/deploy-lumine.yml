@@ -4,8 +4,6 @@ name: Deploy lumine
 # Terraform provisions the Pages project but cannot upload its contents.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 18 * * *" # track master; an unchanged build uploads nothing
 
 permissions:
   contents: read
