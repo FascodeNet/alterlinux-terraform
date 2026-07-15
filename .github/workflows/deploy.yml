@@ -1,0 +1,92 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Kamisato ref to deploy (ayato image + lumine build).
+        default: master
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  KAMISATO_REPO: Hayao0819/Kamisato
+  PAGES_PROJECT: alterlinux
+  AYATO_URL: https://alter.repo.hayao0819.com
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.r.outputs.sha }}
+    steps:
+      - id: r
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(gh api "repos/${KAMISATO_REPO}/commits/${{ inputs.ref }}" --jq .sha)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+
+  terraform:
+    needs: resolve
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_ayato_image_tag: sha-${{ needs.resolve.outputs.sha }}
+      TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+      TF_VAR_cloudflare_account_id: ${{ vars.CF_ACCOUNT_ID }}
+      TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_r2_access_key_id: ${{ secrets.R2_ACCESS_KEY_ID }}
+      TF_VAR_r2_secret_access_key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      TF_VAR_cfkv_namespace_id: ${{ secrets.CFKV_NAMESPACE_ID }}
+      TF_VAR_cfkv_token: ${{ secrets.CFKV_TOKEN }}
+      TF_VAR_ayato_domains: '["alter.repo.hayao0819.com"]'
+      TF_VAR_auth_public_origin: https://alter.hayao0819.com
+      TF_VAR_ayato_repos: '[{"name":"alterlinux","arches":["x86_64"]},{"name":"alterlinux-aur","arches":["x86_64"]},{"name":"alterlinux-nostalgia","arches":["pentium4","i686","i486"]}]'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - name: Apply ayato
+        working-directory: terraform/ayato
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="prefix=ayato"
+          terraform apply -input=false -auto-approve
+      - name: Apply lumine
+        working-directory: terraform/lumine
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="prefix=lumine"
+          terraform apply -input=false -auto-approve
+
+  lumine:
+    needs: [resolve, terraform]
+    runs-on: ubuntu-latest
+    steps:
+      - id: cfg
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # Secrets can't be read in `if:`; skip (not fail) when the token is unset.
+          [ -n "$TOKEN" ] && echo "ready=true" >>"$GITHUB_OUTPUT" || echo "ready=false" >>"$GITHUB_OUTPUT"
+      - if: steps.cfg.outputs.ready == 'true'
+        uses: Hayao0819/Kamisato/actions/build-lumine@master
+        id: lumine
+        with:
+          ayato_url: ${{ env.AYATO_URL }}
+          auth_mode: bearer
+          ref: ${{ needs.resolve.outputs.sha }}
+      - if: steps.cfg.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CF_ACCOUNT_ID }}
+          command: pages deploy ${{ steps.lumine.outputs.dir }} --project-name=${{ env.PAGES_PROJECT }} --branch=main
