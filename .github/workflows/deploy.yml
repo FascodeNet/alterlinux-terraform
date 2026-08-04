@@ -47,7 +47,7 @@ jobs:
       TF_VAR_cfkv_token: ${{ secrets.CFKV_TOKEN }}
       TF_VAR_ayato_domains: '["alter.repo.hayao0819.com"]'
       TF_VAR_auth_public_origin: https://alter.hayao0819.com
-      TF_VAR_ayato_repos: '[{"name":"alterlinux","arches":["x86_64"]},{"name":"alterlinux-aur","arches":["x86_64"]},{"name":"alterlinux-nostalgia","arches":["pentium4","i686","i486"]}]'
+      TF_VAR_ayato_repos: '[{"name":"alterlinux","arches":["x86_64","pentium4","i686","i486"]},{"name":"alterlinux-aur","arches":["x86_64","pentium4","i686","i486"]},{"name":"alterlinux-nostalgia","arches":["pentium4","i686","i486"]}]'
     steps:
       - uses: actions/checkout@v7
       - uses: google-github-actions/auth@v3
