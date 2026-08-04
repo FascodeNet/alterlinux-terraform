@@ -34,8 +34,8 @@ variable "ayato_repos" {
     arches = list(string)
   }))
   default = [
-    { name = "alterlinux", arches = ["x86_64"] },
-    { name = "alterlinux-aur", arches = ["x86_64"] },
+    { name = "alterlinux", arches = ["x86_64", "pentium4", "i686", "i486"] },
+    { name = "alterlinux-aur", arches = ["x86_64", "pentium4", "i686", "i486"] },
     { name = "alterlinux-nostalgia", arches = ["pentium4", "i686", "i486"] },
   ]
 }
